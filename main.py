@@ -14,6 +14,7 @@ def send_1(message):
     bot.reply_to(message, "/WHAT - О глобальном потеплении")
     bot.reply_to(message, "/EASY - О решении проблемы с глобальным потеплением")
     bot.reply_to(message, "/Zakl - Заключение о Глобальном потеплении")
+    bot.reply_to(message, "/Energy - Расчитает сколько энергии потратит тот или иной прибор (/energy [мощность] [часы] - вот так надо писать только без скобочек, например - /energy 60 4.)")
 
 @bot.message_handler(commands=['Rinfo'])
 def website_command(message):
@@ -137,6 +138,56 @@ def engine_fuel_command(message):
 
         # Форматируем результат
         result_message = f"Приблизительный расход топлива: {fuel_consumption:.2f} литров на 100 км"
+        bot.reply_to(message, result_message)
+
+    except Exception as e:
+        bot.reply_to(message, f"Произошла ошибка: {e}")
+
+def calculate_energy_consumption(power, hours_per_day):
+    """
+    Рассчитывает энергопотребление прибора за месяц.
+
+    Параметры:
+        power (float): Мощность прибора в ваттах.
+        hours_per_day (float): Количество часов работы прибора в день.
+
+    Возвращает:
+        float: Энергопотребление за месяц (30 дней) в киловатт-часах (кВт*ч).
+    """
+    days_in_month = 30
+    energy_consumption_wh = power * hours_per_day * days_in_month  # Ватт-часы
+    energy_consumption_kwh = energy_consumption_wh / 1000  # Киловатт-часы
+    return energy_consumption_kwh
+
+
+@bot.message_handler(commands=['Energy'])
+def energy_command(message):
+    """
+    Вычисляет энергопотребление прибора за месяц.
+    Команда должна быть в формате: /energy мощность часы
+    где:
+        мощность - мощность прибора в ваттах (например, 100)
+        часы - количество часов работы в день (например, 2.5)
+    """
+    try:
+        # Извлекаем аргументы из сообщения
+        parts = message.text.split()
+        if len(parts) != 3:
+            bot.reply_to(message, "Неверный формат команды. Используйте: /energy мощность часы (например, /energy 60 4)")
+            return
+
+        try:
+            power = float(parts[1])  # Мощность прибора
+            hours_per_day = float(parts[2])  # Часы работы в день
+        except ValueError:
+            bot.reply_to(message, "Мощность и часы должны быть числами.")
+            return
+
+        # Вычисляем энергопотребление
+        energy_consumption = calculate_energy_consumption(power, hours_per_day)
+
+        # Форматируем результат
+        result_message = f"Энергопотребление за месяц: {energy_consumption:.2f} кВт*ч"
         bot.reply_to(message, result_message)
 
     except Exception as e:
